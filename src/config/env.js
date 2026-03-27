@@ -21,7 +21,8 @@ export const env = {
   shopifyClientSecret: required("SHOPIFY_CLIENT_SECRET"),
   shopifyApiVersion: process.env.SHOPIFY_API_VERSION || "2026-01",
   shopifyWebhookSecret: required("SHOPIFY_WEBHOOK_SECRET"),
-
+  shopifyStorefrontDomain: process.env.SHOPIFY_STOREFRONT_DOMAIN || null,
+  shopifyStorefrontLocale: process.env.SHOPIFY_STOREFRONT_LOCALE || "en-lb",
   openaiApiKey: required("OPENAI_API_KEY"),
 
   whatsappToken: required("WHATSAPP_TOKEN"),
