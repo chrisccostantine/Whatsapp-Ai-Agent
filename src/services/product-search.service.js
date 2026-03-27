@@ -26,8 +26,8 @@ export async function searchProducts({ q, size }) {
 
   // 🔍 Search by size (flexible)
   if (size) {
-    query += ` AND v.option_size LIKE ?`;
-    params.push(`%${size}%`);
+    query += ` AND (v.option_size LIKE ? OR v.title LIKE ?)`;
+    params.push(`%${size}%`, `%${size}%`);
   }
 
   // 🔥 Only in stock

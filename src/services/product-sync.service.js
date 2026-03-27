@@ -9,13 +9,52 @@ function normalizeOptionName(value) {
 }
 
 function getOptionValueByAliases(options, aliases = []) {
+  if (!Array.isArray(options) || options.length === 0) return null;
+
   const normalizedAliases = aliases.map(normalizeOptionName);
 
-  const match = options.find((opt) =>
-    normalizedAliases.includes(normalizeOptionName(opt.name)),
-  );
+  const match = options.find((opt) => {
+    const optionName = normalizeOptionName(opt.name);
+
+    return (
+      normalizedAliases.includes(optionName) ||
+      normalizedAliases.some((alias) => optionName.includes(alias))
+    );
+  });
 
   return match ? String(match.value || "").trim() : null;
+}
+function extractSizeFromVariantTitle(title) {
+  const normalizedTitle = String(title || "")
+    .trim()
+    .toLowerCase();
+  if (!normalizedTitle || normalizedTitle === "default title") return null;
+
+  const match = normalizedTitle.match(/\b(\d{2}(?:[./]\d)?)\b/);
+  return match ? match[1] : null;
+}
+
+function getVariantSize(variant) {
+  const fromOptions = getOptionValueByAliases(variant.selectedOptions, [
+    "size",
+    "shoe size",
+    "shoe-size",
+    "eu size",
+    "us size",
+  ]);
+
+  if (fromOptions) return fromOptions;
+
+  return extractSizeFromVariantTitle(variant.title);
+}
+
+function getVariantColor(variant) {
+  return getOptionValueByAliases(variant.selectedOptions, [
+    "color",
+    "colour",
+    "shoe color",
+    "shoe-colour",
+  ]);
 }
 
 function toMySQLDateTime(value) {
@@ -67,15 +106,8 @@ export async function syncProductsFromShopify() {
       for (const variantEdge of product.variants.edges) {
         const variant = variantEdge.node;
 
-        const size = getOptionValueByAliases(variant.selectedOptions, [
-          "size",
-          "shoe size",
-        ]);
-
-        const color = getOptionValueByAliases(variant.selectedOptions, [
-          "color",
-          "colour",
-        ]);
+        const size = getVariantSize(variant);
+        const color = getVariantColor(variant);
 
         await db.query(
           `
