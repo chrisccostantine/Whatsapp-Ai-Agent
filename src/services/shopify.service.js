@@ -75,6 +75,7 @@ export async function fetchProductsPage(after = null) {
             id
             title
             handle
+            onlineStoreUrl
             vendor
             status
             updatedAt

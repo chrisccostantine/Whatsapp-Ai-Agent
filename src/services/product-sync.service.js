@@ -95,7 +95,8 @@ export async function syncProductsFromShopify() {
           product.handle,
           product.vendor,
           product.status,
-          `https://${process.env.SHOPIFY_SHOP.replace(".myshopify.com", "")}.com/products/${product.handle}`,
+          product.onlineStoreUrl ||
+            `https://${env.shopifyShop}/products/${product.handle}`,
           product.featuredImage?.url || null,
           toMySQLDateTime(product.updatedAt),
         ],
