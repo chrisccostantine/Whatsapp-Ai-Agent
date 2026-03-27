@@ -1,6 +1,6 @@
 import { db } from "../config/db.js";
+import { env } from "../config/env.js";
 import { fetchProductsPage } from "./shopify.service.js";
-
 function normalizeOptionName(value) {
   return String(value || "")
     .trim()

@@ -1,5 +1,32 @@
 import { db } from "../config/db.js";
+import { env } from "../config/env.js";
 
+function toCanonicalProductUrl(productUrl, handle) {
+  const locale = String(env.shopifyStorefrontLocale || "")
+    .trim()
+    .replace(/^\/+|\/+$/g, "");
+  const localePrefix = locale ? `/${locale}` : "";
+  const domain = String(env.shopifyStorefrontDomain || "markastorelb.com")
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .replace(/\/+$/, "");
+
+  let productHandle = String(handle || "").trim();
+
+  if (productUrl) {
+    try {
+      const parsed = new URL(productUrl);
+      const fromPath = parsed.pathname.match(/\/products\/([^/?#]+)/i)?.[1];
+      if (fromPath) productHandle = fromPath;
+    } catch {
+      // ignore invalid URL and keep fallback handle
+    }
+  }
+
+  return `https://${domain}${localePrefix}/products/${productHandle}`;
+}
 export async function searchProducts({ q, size }) {
   let query = `
     SELECT 
@@ -37,5 +64,8 @@ export async function searchProducts({ q, size }) {
 
   const [rows] = await db.query(query, params);
 
-  return rows;
+  return rows.map((row) => ({
+    ...row,
+    product_url: toCanonicalProductUrl(row.product_url, row.handle),
+  }));
 }
