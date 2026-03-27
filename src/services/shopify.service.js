@@ -1,17 +1,59 @@
 import axios from "axios";
 import { env } from "../config/env.js";
 
-const shopifyClient = axios.create({
-  baseURL: `https://${env.shopifyShop}/admin/api/${env.shopifyApiVersion}/graphql.json`,
-  headers: {
-    "Content-Type": "application/json",
-    "X-Shopify-Access-Token": env.shopifyAdminAccessToken,
-  },
-  timeout: 30000,
-});
+let cachedAccessToken = null;
+let cachedAccessTokenExpiresAt = 0;
+
+async function getShopifyAccessToken() {
+  const now = Date.now();
+
+  if (cachedAccessToken && now < cachedAccessTokenExpiresAt - 60_000) {
+    return cachedAccessToken;
+  }
+
+  const url = `https://${env.shopifyShop}/admin/oauth/access_token`;
+
+  const { data } = await axios.post(
+    url,
+    {
+      client_id: env.shopifyClientId,
+      client_secret: env.shopifyClientSecret,
+      grant_type: "client_credentials",
+    },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+      timeout: 30000,
+    },
+  );
+
+  if (!data?.access_token) {
+    throw new Error("Failed to obtain Shopify access token");
+  }
+
+  cachedAccessToken = data.access_token;
+
+  // Shopify docs say tokens expire after 24 hours.
+  cachedAccessTokenExpiresAt = now + 24 * 60 * 60 * 1000;
+
+  return cachedAccessToken;
+}
 
 export async function shopifyGraphQL(query, variables = {}) {
-  const { data } = await shopifyClient.post("", { query, variables });
+  const accessToken = await getShopifyAccessToken();
+
+  const { data } = await axios.post(
+    `https://${env.shopifyShop}/admin/api/${env.shopifyApiVersion}/graphql.json`,
+    { query, variables },
+    {
+      headers: {
+        "Content-Type": "application/json",
+        "X-Shopify-Access-Token": accessToken,
+      },
+      timeout: 30000,
+    },
+  );
 
   if (data.errors?.length) {
     throw new Error(`Shopify GraphQL error: ${JSON.stringify(data.errors)}`);
