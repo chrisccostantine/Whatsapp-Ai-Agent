@@ -17,7 +17,8 @@ export const env = {
   mysqlUrl: required("MYSQL_URL"),
 
   shopifyShop: required("SHOPIFY_SHOP"),
-  shopifyAdminAccessToken: required("SHOPIFY_ADMIN_ACCESS_TOKEN"),
+  shopifyClientId: required("SHOPIFY_CLIENT_ID"),
+  shopifyClientSecret: required("SHOPIFY_CLIENT_SECRET"),
   shopifyApiVersion: process.env.SHOPIFY_API_VERSION || "2026-01",
   shopifyWebhookSecret: required("SHOPIFY_WEBHOOK_SECRET"),
 
