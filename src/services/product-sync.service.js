@@ -30,7 +30,31 @@ function extractSizeFromVariantTitle(title) {
     .toLowerCase();
   if (!normalizedTitle || normalizedTitle === "default title") return null;
 
-  const match = normalizedTitle.match(/\b(\d{2}(?:[./]\d)?)\b/);
+  const match = normalizedTitle.match(/\b(\d{2}(?:[./]\d{1,2})?)\b/);
+  return match ? match[1] : null;
+}
+
+function looksLikeShoeSize(value) {
+  const normalized = String(value || "").trim();
+  return /^\d{2}(?:[./]\d{1,2})?$/.test(normalized);
+}
+
+function extractSizeFromAnyOption(options) {
+  if (!Array.isArray(options) || options.length === 0) return null;
+
+  const match = options.find((opt) => looksLikeShoeSize(opt?.value));
+  return match ? String(match.value).trim() : null;
+}
+
+function extractSizeFromSku(sku) {
+  const normalized = String(sku || "")
+    .trim()
+    .toLowerCase();
+  if (!normalized) return null;
+
+  const match = normalized.match(
+    /(?:^|[-_/ ])(\d{2}(?:[./]\d{1,2})?)(?:$|[-_/ ])/,
+  );
   return match ? match[1] : null;
 }
 
@@ -41,11 +65,22 @@ function getVariantSize(variant) {
     "shoe-size",
     "eu size",
     "us size",
+    "uk size",
+    "size eu",
+    "size us",
+    "size uk",
+    "مقاس",
   ]);
 
   if (fromOptions) return fromOptions;
 
-  return extractSizeFromVariantTitle(variant.title);
+  const fromAnyOptionValue = extractSizeFromAnyOption(variant.selectedOptions);
+  if (fromAnyOptionValue) return fromAnyOptionValue;
+
+  const fromTitle = extractSizeFromVariantTitle(variant.title);
+  if (fromTitle) return fromTitle;
+
+  return extractSizeFromSku(variant.sku);
 }
 
 function getVariantColor(variant) {
