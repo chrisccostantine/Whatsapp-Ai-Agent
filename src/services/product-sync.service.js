@@ -7,7 +7,10 @@ function getOptionValue(options, targetName) {
   );
   return match ? match.value : null;
 }
-
+function toMySQLDateTime(value) {
+  if (!value) return null;
+  return value.replace("T", " ").replace("Z", "");
+}
 export async function syncProductsFromShopify() {
   let after = null;
   let hasNextPage = true;
@@ -43,7 +46,7 @@ export async function syncProductsFromShopify() {
           product.status,
           `https://${process.env.SHOPIFY_SHOP.replace(".myshopify.com", "")}.com/products/${product.handle}`,
           product.featuredImage?.url || null,
-          product.updatedAt,
+          toMySQLDateTime(product.updatedAt),
         ],
       );
 
@@ -77,7 +80,7 @@ export async function syncProductsFromShopify() {
             size,
             color,
             variant.inventoryQuantity ?? 0,
-            variant.updatedAt,
+            toMySQLDateTime(variant.updatedAt),
           ],
         );
 
