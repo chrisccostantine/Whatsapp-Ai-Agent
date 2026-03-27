@@ -11,10 +11,8 @@ async function getShopifyAccessToken() {
     return cachedAccessToken;
   }
 
-  const url = `https://${env.shopifyShop}/admin/oauth/access_token`;
-
   const { data } = await axios.post(
-    url,
+    `https://${env.shopifyShop}/admin/oauth/access_token`,
     {
       client_id: env.shopifyClientId,
       client_secret: env.shopifyClientSecret,
@@ -33,8 +31,6 @@ async function getShopifyAccessToken() {
   }
 
   cachedAccessToken = data.access_token;
-
-  // Shopify docs say tokens expire after 24 hours.
   cachedAccessTokenExpiresAt = now + 24 * 60 * 60 * 1000;
 
   return cachedAccessToken;
@@ -69,7 +65,7 @@ export async function shopifyGraphQL(query, variables = {}) {
 export async function fetchProductsPage(after = null) {
   const query = `
     query FetchProducts($after: String) {
-      products(first: 50, after: $after) {
+      products(first: 10, after: $after) {
         pageInfo {
           hasNextPage
           endCursor
@@ -85,7 +81,7 @@ export async function fetchProductsPage(after = null) {
             featuredImage {
               url
             }
-            variants(first: 100) {
+            variants(first: 20) {
               edges {
                 node {
                   id
