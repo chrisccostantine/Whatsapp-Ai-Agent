@@ -1,16 +1,28 @@
 import { db } from "../config/db.js";
 import { fetchProductsPage } from "./shopify.service.js";
 
-function getOptionValue(options, targetName) {
-  const match = options.find(
-    (opt) => opt.name?.toLowerCase() === targetName.toLowerCase(),
-  );
-  return match ? match.value : null;
+function normalizeOptionName(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, " ");
 }
+
+function getOptionValueByAliases(options, aliases = []) {
+  const normalizedAliases = aliases.map(normalizeOptionName);
+
+  const match = options.find((opt) =>
+    normalizedAliases.includes(normalizeOptionName(opt.name)),
+  );
+
+  return match ? String(match.value || "").trim() : null;
+}
+
 function toMySQLDateTime(value) {
   if (!value) return null;
   return value.replace("T", " ").replace("Z", "");
 }
+
 export async function syncProductsFromShopify() {
   let after = null;
   let hasNextPage = true;
@@ -54,8 +66,16 @@ export async function syncProductsFromShopify() {
 
       for (const variantEdge of product.variants.edges) {
         const variant = variantEdge.node;
-        const size = getOptionValue(variant.selectedOptions, "Size");
-        const color = getOptionValue(variant.selectedOptions, "Color");
+
+        const size = getOptionValueByAliases(variant.selectedOptions, [
+          "size",
+          "shoe size",
+        ]);
+
+        const color = getOptionValueByAliases(variant.selectedOptions, [
+          "color",
+          "colour",
+        ]);
 
         await db.query(
           `
